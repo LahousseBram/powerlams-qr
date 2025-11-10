@@ -169,6 +169,16 @@ function openEditModal(id) {
     document.getElementById('documentFile').value = '';
     document.getElementById('securityCode').value = '';
 
+    // Clear preview
+    const preview = document.getElementById('documentPreview');
+    preview.innerHTML = '';
+    preview.classList.remove('active');
+
+    // Show existing document preview if available
+    if (qr.documentUrl) {
+        showDocumentPreview(qr.documentUrl, qr.documentType);
+    }
+
     const modal = document.getElementById('editModal');
     modal.style.display = 'block';
 }
@@ -177,6 +187,37 @@ function openEditModal(id) {
 function closeEditModal() {
     const modal = document.getElementById('editModal');
     modal.style.display = 'none';
+
+    // Clear preview
+    const preview = document.getElementById('documentPreview');
+    preview.innerHTML = '';
+    preview.classList.remove('active');
+}
+
+// Show document preview
+function showDocumentPreview(url, type) {
+    const preview = document.getElementById('documentPreview');
+    preview.classList.add('active');
+
+    if (type && type.startsWith('image/')) {
+        preview.innerHTML = `
+            <div class="preview-label">Image Preview</div>
+            <img src="${url}" alt="Document preview">
+        `;
+    } else if (type === 'application/pdf') {
+        preview.innerHTML = `
+            <div class="preview-label">PDF Preview</div>
+            <iframe src="${url}"></iframe>
+        `;
+    } else if (type === 'url') {
+        preview.innerHTML = `
+            <div class="preview-label">External URL: ${url}</div>
+        `;
+    } else {
+        preview.innerHTML = `
+            <div class="preview-label">Document: ${url.substring(0, 50)}...</div>
+        `;
+    }
 }
 
 // Handle edit form submission
@@ -352,6 +393,18 @@ function setupEventListeners() {
     document.getElementById('addQRBtn').addEventListener('click', addQRCode);
     document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
     document.getElementById('cancelBtn').addEventListener('click', closeEditModal);
+
+    // File input change listener for preview
+    document.getElementById('documentFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                showDocumentPreview(event.target.result, file.type);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 
     const modal = document.getElementById('editModal');
     const closeBtn = document.querySelector('.close');

@@ -1,12 +1,23 @@
 import { createClient } from 'redis';
 
-let client;
+let client = null;
 
 async function getRedisClient() {
-    if (!client) {
+    if (!client || !client.isOpen) {
         client = createClient({
-            url: process.env.REDIS_URL
+            url: process.env.REDIS_URL,
+            socket: {
+                reconnectStrategy: (retries) => {
+                    if (retries > 3) return new Error('Max retries reached');
+                    return Math.min(retries * 100, 3000);
+                }
+            }
         });
+
+        client.on('error', (err) => {
+            console.error('Redis Client Error:', err);
+        });
+
         await client.connect();
     }
     return client;
@@ -22,8 +33,10 @@ export default async function handler(req, res) {
         return res.status(200).end();
     }
 
+    let redis;
+
     try {
-        const redis = await getRedisClient();
+        redis = await getRedisClient();
 
         if (req.method === 'GET') {
             // Get all QR codes
@@ -47,7 +60,23 @@ export default async function handler(req, res) {
 
         return res.status(405).json({ error: 'Method not allowed' });
     } catch (error) {
-        console.error('Redis error:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+        console.error('API Error:', error.message);
+        console.error('Stack:', error.stack);
+
+        // Close broken connection
+        if (client) {
+            try {
+                await client.quit();
+            } catch (e) {
+                // Ignore quit errors
+            }
+            client = null;
+        }
+
+        return res.status(500).json({
+            error: 'Internal server error',
+            message: error.message,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 }
