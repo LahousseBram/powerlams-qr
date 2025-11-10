@@ -5,21 +5,48 @@ let qrCodes = [];
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     loadQRCodes();
-    renderQRGrid();
     setupEventListeners();
 });
 
-// Load QR codes from localStorage
-function loadQRCodes() {
-    const stored = localStorage.getItem('qrCodes');
-    if (stored) {
-        qrCodes = JSON.parse(stored);
+// Load QR codes from API
+async function loadQRCodes() {
+    try {
+        const response = await fetch('/api/qr-codes');
+        if (response.ok) {
+            qrCodes = await response.json();
+            renderQRGrid();
+        } else {
+            console.error('Failed to load QR codes');
+            renderQRGrid();
+        }
+    } catch (error) {
+        console.error('Error loading QR codes:', error);
+        renderQRGrid();
     }
 }
 
-// Save QR codes to localStorage
-function saveQRCodes() {
-    localStorage.setItem('qrCodes', JSON.stringify(qrCodes));
+// Save QR codes to API
+async function saveQRCodes(securityCode = SECURITY_CODE) {
+    try {
+        const response = await fetch('/api/qr-codes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ qrCodes, securityCode })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save');
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error saving QR codes:', error);
+        alert('Failed to save QR codes: ' + error.message);
+        return false;
+    }
 }
 
 // Generate random ID
@@ -28,7 +55,7 @@ function generateRandomId() {
 }
 
 // Add new QR code
-function addQRCode() {
+async function addQRCode() {
     const newQR = {
         id: generateRandomId(),
         title: '',
@@ -37,15 +64,15 @@ function addQRCode() {
         createdAt: new Date().toISOString()
     };
     qrCodes.push(newQR);
-    saveQRCodes();
+    await saveQRCodes();
     renderQRGrid();
 }
 
 // Remove QR code
-function removeQRCode(id) {
+async function removeQRCode(id) {
     if (confirm('Are you sure you want to delete this QR code?')) {
         qrCodes = qrCodes.filter(qr => qr.id !== id);
-        saveQRCodes();
+        await saveQRCodes();
         renderQRGrid();
     }
 }
@@ -153,7 +180,7 @@ function closeEditModal() {
 }
 
 // Handle edit form submission
-function handleEditSubmit(e) {
+async function handleEditSubmit(e) {
     e.preventDefault();
 
     const qrId = document.getElementById('qrId').value;
@@ -174,31 +201,37 @@ function handleEditSubmit(e) {
     // Update title
     qr.title = qrTitle;
 
-    // Handle file upload (convert to base64 for localStorage)
+    // Handle file upload (convert to base64 for storage)
     if (documentFile) {
         const reader = new FileReader();
-        reader.onload = function(event) {
+        reader.onload = async function(event) {
             qr.documentUrl = event.target.result;
             qr.documentType = documentFile.type;
-            saveQRCodes();
-            renderQRGrid();
-            closeEditModal();
-            alert('QR code updated successfully!');
+            const success = await saveQRCodes(securityCode);
+            if (success) {
+                renderQRGrid();
+                closeEditModal();
+                alert('QR code updated successfully!');
+            }
         };
         reader.readAsDataURL(documentFile);
     } else if (documentUrl) {
         qr.documentUrl = documentUrl;
         qr.documentType = 'url';
-        saveQRCodes();
-        renderQRGrid();
-        closeEditModal();
-        alert('QR code updated successfully!');
+        const success = await saveQRCodes(securityCode);
+        if (success) {
+            renderQRGrid();
+            closeEditModal();
+            alert('QR code updated successfully!');
+        }
     } else {
         // Just save title without document
-        saveQRCodes();
-        renderQRGrid();
-        closeEditModal();
-        alert('QR code updated successfully!');
+        const success = await saveQRCodes(securityCode);
+        if (success) {
+            renderQRGrid();
+            closeEditModal();
+            alert('QR code updated successfully!');
+        }
     }
 }
 

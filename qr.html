@@ -108,34 +108,39 @@
         const urlParams = new URLSearchParams(window.location.search);
         const qrId = urlParams.get('id');
 
-        // Load QR codes from localStorage
-        function loadDocument() {
+        // Load QR codes from API
+        async function loadDocument() {
             if (!qrId) {
                 showError('No QR code ID provided');
                 return;
             }
 
-            const stored = localStorage.getItem('qrCodes');
-            if (!stored) {
-                showError('No QR codes found');
-                return;
+            try {
+                const response = await fetch('/api/qr-codes');
+                if (!response.ok) {
+                    showError('Failed to load QR codes');
+                    return;
+                }
+
+                const qrCodes = await response.json();
+                const qr = qrCodes.find(q => q.id === qrId);
+
+                if (!qr) {
+                    showError(`QR code "${qrId}" not found`);
+                    return;
+                }
+
+                if (!qr.documentUrl) {
+                    showError('No document linked to this QR code');
+                    return;
+                }
+
+                // Redirect or display document based on type
+                displayDocument(qr.documentUrl, qr.documentType);
+            } catch (error) {
+                console.error('Error loading document:', error);
+                showError('Failed to load document');
             }
-
-            const qrCodes = JSON.parse(stored);
-            const qr = qrCodes.find(q => q.id === qrId);
-
-            if (!qr) {
-                showError(`QR code "${qrId}" not found`);
-                return;
-            }
-
-            if (!qr.documentUrl) {
-                showError('No document linked to this QR code');
-                return;
-            }
-
-            // Redirect or display document based on type
-            displayDocument(qr.documentUrl, qr.documentType);
         }
 
         function displayDocument(url, type) {

@@ -1,0 +1,8 @@
+{
+  "name": "powerlams-qr",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "redis": "^4.6.12"
+  }
+}
