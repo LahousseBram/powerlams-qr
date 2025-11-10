@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Redirect</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 500px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            color: #666;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .error {
+            color: #dc3545;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px 0;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+        }
+
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>QR Code Document</h1>
+        <div id="content">
+            <div class="loading"></div>
+            <p class="message">Loading document...</p>
+        </div>
+    </div>
+
+    <script>
+        // Get QR code ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const qrId = urlParams.get('id');
+
+        // Load QR codes from localStorage
+        function loadDocument() {
+            if (!qrId) {
+                showError('No QR code ID provided');
+                return;
+            }
+
+            const stored = localStorage.getItem('qrCodes');
+            if (!stored) {
+                showError('No QR codes found');
+                return;
+            }
+
+            const qrCodes = JSON.parse(stored);
+            const qr = qrCodes.find(q => q.id === qrId);
+
+            if (!qr) {
+                showError(`QR code "${qrId}" not found`);
+                return;
+            }
+
+            if (!qr.documentUrl) {
+                showError('No document linked to this QR code');
+                return;
+            }
+
+            // Redirect or display document based on type
+            displayDocument(qr.documentUrl, qr.documentType);
+        }
+
+        function displayDocument(url, type) {
+            const content = document.getElementById('content');
+
+            if (!type || type === 'url') {
+                // External URL - redirect directly
+                window.location.href = url;
+            } else if (type.startsWith('image/')) {
+                // Display image
+                content.innerHTML = `
+                    <p class="message">Image Document</p>
+                    <img src="${url}" alt="QR Document">
+                    <br>
+                    <a href="${url}" download class="btn">Download Image</a>
+                `;
+            } else if (type === 'application/pdf') {
+                // Display PDF in iframe
+                content.innerHTML = `
+                    <p class="message">PDF Document</p>
+                    <iframe src="${url}"></iframe>
+                    <br>
+                    <a href="${url}" download class="btn">Download PDF</a>
+                `;
+            } else {
+                // Other file types - offer download
+                content.innerHTML = `
+                    <p class="message">Document Ready</p>
+                    <a href="${url}" download class="btn">Download Document</a>
+                `;
+            }
+        }
+
+        function showError(message) {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <p class="message error">${message}</p>
+                <a href="index.html" class="btn">Go to Library</a>
+            `;
+        }
+
+        // Load document on page load
+        loadDocument();
+    </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Library Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="background-pattern"></div>
+
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="40" height="40" rx="8" fill="url(#gradient)"/>
+                        <path d="M10 10h6v6h-6zm8 0h2v2h2v-2h2v4h-2v2h2v2h-4v-2h-2v-2h2v-2h-2zm4 6h2v2h-2zm-12 2h2v2h2v2h-4zm4 2h2v2h-2zm8-2h2v4h2v2h-6v-2h2zm-12 4h2v4h-2zm4 0h4v2h-2v2h-2zm8 0v2h-2v2h2v2h4v-6zm2 4h2v2h-2z" fill="white"/>
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#6366f1"/>
+                                <stop offset="100%" stop-color="#8b5cf6"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <h1>QR Library</h1>
+                </div>
+                <button id="addQRBtn" class="btn btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Add Code
+                </button>
+            </div>
+        </header>
+
+        <div id="qrGrid" class="qr-grid">
+            <!-- QR codes will be dynamically added here -->
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit QR Code</h2>
+            <form id="editForm">
+                <div class="form-group">
+                    <label for="qrId">QR Code ID:</label>
+                    <input type="text" id="qrId" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="qrTitle">Title (for printing):</label>
+                    <input type="text" id="qrTitle" placeholder="e.g., Menu, WiFi Password, Contact Info">
+                </div>
+                <div class="form-group">
+                    <label for="documentFile">Upload Document:</label>
+                    <input type="file" id="documentFile" accept="image/*,.pdf">
+                    <p class="help-text">Or enter URL:</p>
+                    <input type="url" id="documentUrl" placeholder="https://example.com/document.pdf">
+                </div>
+                <div class="form-group">
+                    <label for="securityCode">Security Code:</label>
+                    <input type="password" id="securityCode" required placeholder="Enter security code">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
