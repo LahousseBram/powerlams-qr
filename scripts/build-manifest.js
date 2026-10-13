@@ -1,9 +1,11 @@
 // Scans documents/ for PDFs and writes documents.json (one QR entry per PDF).
 // Run with: node scripts/build-manifest.js
-import { readdirSync, statSync, writeFileSync } from 'fs';
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'fs';
 import { join, basename, extname, sep } from 'path';
 
 const ROOT = 'documents';
+// Descriptive titles per filename (scripts/titles.json); falls back to the filename.
+const titles = JSON.parse(readFileSync('scripts/titles.json', 'utf-8'));
 
 function findPdfs(dir) {
     return readdirSync(dir).flatMap(name => {
@@ -18,7 +20,7 @@ const entries = findPdfs(ROOT).sort().map(path => {
     const stem = basename(file, extname(file));
     return {
         id: 'QR-' + stem.replace(/\W+/g, '-').toUpperCase(),
-        title: file,
+        title: titles[file] || file,
         documentUrl: '/' + path.split(sep).join('/').split('/').map(encodeURIComponent).join('/'),
         documentType: 'application/pdf',
         createdAt: statSync(path).mtime.toISOString()
