@@ -116,14 +116,20 @@
             }
 
             try {
-                const response = await fetch('/api/qr-codes');
-                if (!response.ok) {
-                    showError('Failed to load QR codes');
-                    return;
+                let qrCodes = [];
+                const response = await fetch('/api/qr-codes').catch(() => null);
+                if (response && response.ok) {
+                    qrCodes = await response.json();
                 }
+                let qr = qrCodes.find(q => q.id === qrId);
 
-                const qrCodes = await response.json();
-                const qr = qrCodes.find(q => q.id === qrId);
+                if (!qr) {
+                    // Fall back to the document manifest (scripts/build-manifest.js)
+                    const manifestResponse = await fetch('/documents.json').catch(() => null);
+                    if (manifestResponse && manifestResponse.ok) {
+                        qr = (await manifestResponse.json()).find(q => q.id === qrId);
+                    }
+                }
 
                 if (!qr) {
                     showError(`QR code "${qrId}" not found`);

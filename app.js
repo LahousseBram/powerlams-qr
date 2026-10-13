@@ -14,14 +14,27 @@ async function loadQRCodes() {
         const response = await fetch('/api/qr-codes');
         if (response.ok) {
             qrCodes = await response.json();
-            renderQRGrid();
         } else {
             console.error('Failed to load QR codes');
-            renderQRGrid();
         }
     } catch (error) {
         console.error('Error loading QR codes:', error);
-        renderQRGrid();
+    }
+    await mergeDocumentManifest();
+    renderQRGrid();
+}
+
+// Add QR codes for documents listed in documents.json (built by scripts/build-manifest.js).
+// Entries already saved in the API win, matched by id.
+async function mergeDocumentManifest() {
+    try {
+        const response = await fetch('/documents.json');
+        if (!response.ok) return;
+        const manifest = await response.json();
+        const known = new Set(qrCodes.map(qr => qr.id));
+        qrCodes.push(...manifest.filter(entry => !known.has(entry.id)));
+    } catch (error) {
+        console.error('Error loading document manifest:', error);
     }
 }
 
